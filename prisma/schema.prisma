@@ -13,11 +13,88 @@ enum TodoStatus {
   Complete
 }
 
+model User {
+  id          String    @id @default(uuid()) @map("_id")
+  username    String    @unique
+  email       String    @unique
+  name        String
+  password    String
+  profile     Profile?
+  todos       Todo[]
+  manageTodos Todo[]    @relation("manageTodos")
+  comments    Comment[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
 model Todo {
-  id          String     @id @default(uuid()) @map("_id")
+  id           String           @id @default(uuid()) @map("_id")
+  title        String
+  description  String?
+  status       TodoStatus       @default(Pending)
+  userId       String
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedById  String?
+  updatedBy    User?            @relation("manageTodos", fields: [updatedById], references: [id])
+  technologies TodoTechnology[]
+  comments     Comment[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model Comment {
+  id        String    @id @default(uuid()) @map("_id")
+  message   String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  todoId    String
+  todo      Todo      @relation(fields: [todoId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Comment?  @relation("commentsParent", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction) //find comment where id = parentId => only parent comment if exist
+  comments  Comment[] @relation("commentsParent") // find all comments where parentId = id  => array of child comment
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Technology {
+  id          String           @id @default(uuid()) @map("_id")
   title       String
   description String?
-  status      TodoStatus @default(Pending)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  todos       TodoTechnology[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 }
+
+model TodoTechnology {
+  id     String     @id @default(uuid()) @map("_id")
+  todoId String
+  todo   Todo       @relation(fields: [todoId], references: [id])
+  techId String
+  tech   Technology @relation(fields: [techId], references: [id])
+}
+
+model Profile {
+  id          String    @id @default(uuid()) @map("_id")
+  name        String
+  email       String    @unique
+  username    String    @unique
+  profileImg  String?
+  bannerImg   String?
+  bio         String?
+  dateOfBirth DateTime?
+  mobile      String?
+  location    String?
+  userId      String    @unique
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+/**
+ * Database Relation
+ * -> One to one relation
+ * -> One to many relation
+ * -> Many to one relation
+ * -> Many to many relation
+ * -> Self relation
+ */

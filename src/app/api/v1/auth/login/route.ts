@@ -1,46 +1,77 @@
-import { PrismaClient } from "@/generated/prisma";
+import { loginSchema } from "@/app/validation/auth.validation";
+import { errorHandler } from "@/lib/error-handler";
+import prisma from "@/lib/prisma";
+import { SendResponse } from "@/lib/send-response";
+import status from "http-status";
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { cookies } from "next/headers";
+import { addDays } from "date-fns";
 
-const loginSchema = z.object({
-  email: z.string().trim().email("Enter a valid email"),
-  password: z.string().min(1, "Password is required"),
-});
-
-const prisma = new PrismaClient();
-
-export async function POST(req: NextRequest) {
+export const POST = async (req: NextRequest) => {
   try {
+    const cookie = await cookies();
     const body = await req.json();
-    const { email, password } = loginSchema.parse(body);
+    const parsedData = loginSchema.parse(body);
 
     const user = await prisma.user.findFirst({
       where: {
-        email: {
-          equals: email,
-          mode: "insensitive",
-        },
+        OR: ["username", "email"].map(field => ({
+          [field]: {
+            equals: parsedData.username,
+            mode: "insensitive",
+          },
+        })),
       },
     });
 
     if (!user) {
-      throw new Error("User does not exist!");
+      return SendResponse({
+        message: "Invalid credentials",
+        statusCode: status.UNAUTHORIZED,
+      });
     }
 
-    const isValidUser = user.password === password;
-    if (!isValidUser) {
-      throw new Error("Wrong password!");
-    }
-
-    return NextResponse.json({
-      message: "Login success!",
-    });
-  } catch (err) {
-    return NextResponse.json(
-      {
-        message: err.message || "unable to login",
-      },
-      { status: 401 }
+    const isValidPassword = await bcrypt.compare(
+      parsedData.password,
+      user.password
     );
+    if (!isValidPassword) {
+      return SendResponse({
+        message: "Invalid credentials",
+        statusCode: status.UNAUTHORIZED,
+      });
+    }
+
+    const accessToken = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        name: user.name,
+      },
+      process.env.ACCESS_TOKEN_SECRET!,
+      {
+        expiresIn: "7d",
+        audience: ["user"],
+      }
+    );
+
+    cookie.set("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      expires: addDays(new Date(), 7),
+      sameSite: "lax",
+    });
+
+    return NextResponse.json(
+      { message: "Login success" },
+      {
+        status: status.OK,
+      }
+    );
+  } catch (err) {
+    return errorHandler(err);
   }
-}
+};

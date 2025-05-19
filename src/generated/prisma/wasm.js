@@ -113,11 +113,62 @@ Prisma.NullTypes = {
  * Enums
  */
 
+exports.Prisma.UserScalarFieldEnum = {
+  id: 'id',
+  username: 'username',
+  email: 'email',
+  name: 'name',
+  password: 'password',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.TodoScalarFieldEnum = {
   id: 'id',
   title: 'title',
   description: 'description',
   status: 'status',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CommentScalarFieldEnum = {
+  id: 'id',
+  message: 'message',
+  userId: 'userId',
+  todoId: 'todoId',
+  parentId: 'parentId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TechnologyScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  description: 'description',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TodoTechnologyScalarFieldEnum = {
+  id: 'id',
+  todoId: 'todoId',
+  techId: 'techId'
+};
+
+exports.Prisma.ProfileScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  username: 'username',
+  profileImg: 'profileImg',
+  bannerImg: 'bannerImg',
+  bio: 'bio',
+  dateOfBirth: 'dateOfBirth',
+  mobile: 'mobile',
+  location: 'location',
+  userId: 'userId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -137,7 +188,12 @@ exports.TodoStatus = exports.$Enums.TodoStatus = {
 };
 
 exports.Prisma.ModelName = {
-  Todo: 'Todo'
+  User: 'User',
+  Todo: 'Todo',
+  Comment: 'Comment',
+  Technology: 'Technology',
+  TodoTechnology: 'TodoTechnology',
+  Profile: 'Profile'
 };
 
 /**
